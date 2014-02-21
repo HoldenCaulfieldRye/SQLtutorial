@@ -54,10 +54,21 @@ FROM     	person
 	 	JOIN monarch AS monarch_2
 	 	ON TRUE
 WHERE    	monarch_2.accession > monarch_1.accession
-	 	AND monarch_2.accession < person.dod;
+	 	AND monarch_2.accession < person.dod
+ORDER BY 	person.name;
 
 
 -- Q6 returns (house,name,accession)
-
-;
-
+-- the table inside ALL() contains monarch x monarch tuples of twice
+-- the same house. so for a monarch was first in line if it never
+-- appears in a tuple of this table joined to a monarch of earlier
+-- accession
+SELECT   mo.house, mo.name, mo.accession
+FROM     monarch AS mo
+WHERE	 mo.accession <= ALL(SELECT mon_2.accession
+       		    	     FROM   monarch AS mon_1
+		    	   	    JOIN monarch AS mon_2
+			   	    ON   mon_1.house=mon_2.house
+			     WHERE  mo.name=mon_1.name)
+	 AND mo.house IS NOT NULL
+ORDER BY mo.accession;
