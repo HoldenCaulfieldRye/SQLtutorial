@@ -58,7 +58,19 @@ FROM     person AS parent
  	 JOIN person AS child
  	 ON child.father = parent.name
  	 JOIN person AS otherchild
- 	 ON child.father = otherchild.father AND child.dob >= otherchild.dob
+ 	 ON (child.father = otherchild.father AND child.dob >= otherchild.dob)
+
+RANK() !! LEFT OR RIGHT JOIN
+
+
+
+
+UNION
+	(SELECT anotherfather.name,
+	        NULL as child,
+	        NULL as born,
+	 FROM   person as anotherfather
+	 EXCEPT DISTINCT witchild)
 ORDER BY father, born;
 
 
