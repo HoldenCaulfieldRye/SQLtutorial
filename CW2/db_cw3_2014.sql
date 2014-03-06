@@ -51,29 +51,18 @@ ORDER BY parent.name;
 
 
 -- Q5 returns (father,child,born)
-SELECT   parent.name AS father,
+SELECT DISTINCT parent.name AS father,
  	 child.name AS child,
- 	 COUNT(CASE 
-	       WHEN child.dob < otherchild.dob 
-	            THEN 1 
-	            ELSE 0
-	       END) 
-	       OVER (PARTITION BY parent.name) AS born
+	 COUNT(otherchild.name) OVER (PARTITION BY child.name) AS born
 FROM     person AS parent
  	 JOIN person AS child
  	 ON child.father = parent.name
  	 JOIN person AS otherchild
- 	 ON child.father = otherchild.name
-ORDER BY parent.name;
+ 	 ON child.father = otherchild.father AND child.dob >= otherchild.dob
+ORDER BY father, born;
 
 
 
-SELECT   parent.name AS father,
-	 child.name AS child,
-	 OVER (PARTITION BY father) AS born
-FROM     person
-WHERE    gender = 'M'
-ORDER BY name;
 
 
 
