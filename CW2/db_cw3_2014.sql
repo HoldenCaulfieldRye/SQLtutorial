@@ -21,10 +21,22 @@ ORDER BY popularity DESC;
 
 -- Q3 returns (house,seventeenth,eighteenth,nineteenth,twentieth)
 SELECT   house,
-	 COUNT(CASE WHEN accession>='1600-01-01' AND accession<'1700-01-01' THEN 1 ELSE NULL END) AS seventeenth,
-	 COUNT(CASE WHEN accession>='1700-01-01' AND accession<'1800-01-01' THEN 1 ELSE NULL END) AS eighteenth,
-	 COUNT(CASE WHEN accession>='1800-01-01' AND accession<'1900-01-01' THEN 1 ELSE NULL END) AS nineteenth,
-	 COUNT(CASE WHEN accession>='1900-01-01' AND accession<'2000-01-01' THEN 1 ELSE NULL END) AS twentieth
+	 COUNT(CASE WHEN accession>='1600-01-01' AND accession<'1700-01-01'
+	 	    	 THEN 1
+		    	 ELSE NULL
+		    END) AS seventeenth,
+	 COUNT(CASE WHEN accession>='1700-01-01' AND accession<'1800-01-01'
+	 	         THEN 1
+			 ELSE NULL
+		    END) AS eighteenth,
+	 COUNT(CASE WHEN accession>='1800-01-01' AND accession<'1900-01-01'
+	 	         THEN 1
+			 ELSE NULL
+		    END) AS nineteenth,
+	 COUNT(CASE WHEN accession>='1900-01-01' AND accession<'2000-01-01'
+	 	    	 THEN 1
+			 ELSE NULL
+		    END) AS twentieth
 FROM     monarch
 GROUP BY house
 ORDER BY house;
@@ -53,29 +65,15 @@ ORDER BY parent.name;
 -- Q5 returns (father,child,born)
 SELECT DISTINCT parent.name AS father,
  	 child.name AS child,
-	 COUNT(otherchild.name) OVER (PARTITION BY child.name) AS born
+	 (CASE WHEN child.name IS NULL
+	            THEN NULL
+		    ELSE RANK() OVER (PARTITION BY parent.name ORDER BY child.name)
+	  END) AS born
 FROM     person AS parent
- 	 JOIN person AS child
+ 	 LEFT JOIN person AS child
  	 ON child.father = parent.name
- 	 JOIN person AS otherchild
- 	 ON (child.father = otherchild.father AND child.dob >= otherchild.dob)
-
-RANK() !! LEFT OR RIGHT JOIN
-
-
-
-
-UNION
-	(SELECT anotherfather.name,
-	        NULL as child,
-	        NULL as born,
-	 FROM   person as anotherfather
-	 EXCEPT DISTINCT witchild)
+WHERE    parent.gender = 'M'
 ORDER BY father, born;
 
 
-
-
-
-
-
+-- Q6 returns 
