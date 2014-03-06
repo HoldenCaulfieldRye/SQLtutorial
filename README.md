@@ -1,4 +1,0 @@
-SQLtutorial
-===========
-
-first SQL exercise.
