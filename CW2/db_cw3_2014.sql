@@ -53,16 +53,6 @@ GROUP BY parent.name
 ORDER BY parent.name;
 
 
--- use this to double check
--- SELECT   parent.name AS parent_name,
--- 	 child.name AS child_name,
--- 	 child.dob AS first_dob
--- FROM     person AS child
--- 	 JOIN person AS parent
--- 	 ON child.father = parent.name OR child.mother = parent.name
--- ORDER BY parent.name;
-
-
 -- Q5 returns (father,child,born)
 SELECT DISTINCT parent.name AS father,
  	 child.name AS child,
@@ -120,34 +110,4 @@ FROM   (SELECT monarch.name,
 WHERE  (pmSF.start <= monSF.start AND monSF.start <= pmSF.finish)
        OR (monSF.start <= pmSF.start AND pmSF.start <= monSF.finish)
 ORDER BY monSF.name, pmSF.name;
-
-
--- monarchSF
-SELECT monarch.name,
-       monarch.accession AS start,
-       (CASE WHEN MIN(later_monarch.accession) IS NULL
-       	          THEN '2015-01-01'
-		  ELSE MIN(later_monarch.accession)
-	END) AS finish
-FROM   monarch
-       LEFT JOIN monarch as later_monarch
-       ON monarch.accession < later_monarch.accession
-GROUP BY monarch.name
-order by monarch.name;
-
-
--- pmSF
--- name is not a key in prime_minister because some prime ministers may hold
--- office for 2 non consecutive terms, so need to group by entry as well
-SELECT prime_minister.name,
-       prime_minister.entry AS start,
-       (CASE WHEN MIN(later_prime_minister.entry) IS NULL
-       	         THEN '2015-01-01'
-                 ELSE MIN(later_prime_minister.entry)
-        END) AS finish
-FROM   prime_minister
-       LEFT JOIN prime_minister as later_prime_minister
-       ON prime_minister.entry < later_prime_minister.entry
-GROUP BY prime_minister.name, prime_minister.entry
-order by prime_minister.name;
 
