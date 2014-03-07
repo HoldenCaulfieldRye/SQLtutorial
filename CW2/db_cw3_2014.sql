@@ -1,20 +1,18 @@
 -- Q1 returns (first_name)
+SELECT DISTINCT CASE 
+       WHEN name NOT LIKE '% %'
+       THEN name
+       ELSE
+       SUBSTRING(name FROM 1 FOR POSITION(' ' IN name)-1)
+       END AS first_name
+FROM   person
+ORDER BY  first_name;
 
-SELECT DISTINCT SUBSTRING(name FROM 1 FOR POSITION(' ' in NAME)) AS first_name
-FROM   person 
-UNION    
-SELECT DISTINCT SUBSTRING(name FROM 1 FOR POSITION(' ' in NAME)) AS first_name
-FROM   monarch 
-UNION  
-SELECT DISTINCT SUBSTRING(name FROM 1 FOR POSITION(' ' in NAME)) AS first_name
-FROM    prime_minister
-ORDER BY first_name;
 
- 
 -- Q2 returns (born_in, popularity) listing places of birth and #occurences of
 -- birthplaces
-SELECT   COUNT(person.name) AS popularity,
-	 born_in
+SELECT   born_in,
+	 COUNT(person.name) AS popularity
 FROM     person
 GROUP BY born_in
 ORDER BY popularity DESC;
@@ -22,30 +20,31 @@ ORDER BY popularity DESC;
 
 -- Q3 returns (house,seventeenth,eighteenth,nineteenth,twentieth)
 SELECT   house,
-	 COUNT(CASE WHEN accession>='1600-01-01' AND accession<'1700-01-01'
+	 COUNT(CASE WHEN accession>= DATE '1600-01-01' AND accession< DATE '1700-01-01'
 	 	    	 THEN 1
 		    	 ELSE NULL
 		    END) AS seventeenth,
-	 COUNT(CASE WHEN accession>='1700-01-01' AND accession<'1800-01-01'
+	 COUNT(CASE WHEN accession>= DATE '1700-01-01' AND accession< DATE '1800-01-01'
 	 	         THEN 1
 			 ELSE NULL
 		    END) AS eighteenth,
-	 COUNT(CASE WHEN accession>='1800-01-01' AND accession<'1900-01-01'
+	 COUNT(CASE WHEN accession>= DATE '1800-01-01' AND accession< DATE '1900-01-01'
 	 	         THEN 1
 			 ELSE NULL
 		    END) AS nineteenth,
-	 COUNT(CASE WHEN accession>='1900-01-01' AND accession<'2000-01-01'
+	 COUNT(CASE WHEN accession>= DATE '1900-01-01' AND accession< DATE '2000-01-01'
 	 	    	 THEN 1
 			 ELSE NULL
 		    END) AS twentieth
 FROM     monarch
+WHERE    house IS NOT NULL
 GROUP BY house
 ORDER BY house;
 
 
 -- Q4 returns (name,age)
 SELECT   parent.name,
-	 MIN(child.dob) AS first_child_dob
+	 MIN((child.dob- parent.dob)/360) AS age
 FROM     person AS child
 	 JOIN person AS parent
 	 ON child.father = parent.name OR child.mother = parent.name
