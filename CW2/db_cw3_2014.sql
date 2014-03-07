@@ -84,29 +84,38 @@ ORDER BY father, born;
 -- date that is greater than that monarch/prime_minister's.
 -- do this with joining on greater than. and then take min().
 
+CREATE TEMPORARY TABLE monSF AS 
+SELECT monarch.name,
+       monarch.accession AS start,
+       (CASE WHEN MIN(later_monarch.accession) IS NULL
+       	       	  THEN '2015-01-01'
+		  ELSE MIN(later_monarch.accession)
+	END) AS finish
+FROM   monarch
+       LEFT JOIN monarch AS later_monarch
+       ON monarch.accession < later_monarch.accession
+GROUP BY monarch.name;
+
+
+CREATE TEMPORARY TABLE pmSF AS 
+SELECT prime_minister.name,
+       prime_minister.entry AS start,
+       (CASE WHEN MIN(later_prime_minister.entry) IS NULL
+       	     THEN '2015-01-01'
+	     ELSE MIN(later_prime_minister.entry)
+	END) AS finish
+FROM   prime_minister
+       LEFT JOIN prime_minister AS later_prime_minister
+       ON prime_minister.entry < later_prime_minister.entry
+GROUP BY prime_minister.name, prime_minister.entry;
+
+
 SELECT DISTINCT monSF.name AS monarch,
        pmSF.name AS prime_minister
-FROM   (SELECT monarch.name,
-       	       monarch.accession AS start,
-       	       (CASE WHEN MIN(later_monarch.accession) IS NULL
-       	       	          THEN '2015-01-01'
-		  	  ELSE MIN(later_monarch.accession)
-		END) AS finish
-	FROM   monarch
-       	       LEFT JOIN monarch AS later_monarch
-       	       ON monarch.accession < later_monarch.accession
-	GROUP BY monarch.name) AS monSF,
-       (SELECT prime_minister.name,
-       	       prime_minister.entry AS start,
-       	       (CASE WHEN MIN(later_prime_minister.entry) IS NULL
-       	                  THEN '2015-01-01'
-                          ELSE MIN(later_prime_minister.entry)
-                END) AS finish
-	FROM   prime_minister
-       	       LEFT JOIN prime_minister as later_prime_minister
-       	       ON prime_minister.entry < later_prime_minister.entry
-	GROUP BY prime_minister.name, prime_minister.entry) AS pmSF
+FROM   monSF,
+       pmSF
 WHERE  (pmSF.start <= monSF.start AND monSF.start <= pmSF.finish)
        OR (monSF.start <= pmSF.start AND pmSF.start <= monSF.finish)
 ORDER BY monSF.name, pmSF.name;
+
 
