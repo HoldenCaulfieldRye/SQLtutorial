@@ -6,12 +6,13 @@ UNION
 SELECT DISTINCT SUBSTRING(name FROM 1 FOR POSITION(' ' in NAME)) AS first_name
 FROM   monarch 
 UNION  
-SELECT DISTINCT SUBSTRING(name FROM 1 FOR POSITION(' ' in NAME)) AS first_name 
+SELECT DISTINCT SUBSTRING(name FROM 1 FOR POSITION(' ' in NAME)) AS first_name
 FROM    prime_minister
 ORDER BY first_name;
 
  
--- Q2 returns (born_in, popularity) listing places of birth and #occurences of birthplaces
+-- Q2 returns (born_in, popularity) listing places of birth and #occurences of
+-- birthplaces
 SELECT   COUNT(person.name) AS popularity,
 	 born_in
 FROM     person
@@ -76,4 +77,59 @@ WHERE    parent.gender = 'M'
 ORDER BY father, born;
 
 
--- Q6 returns 
+-- Q6 returns (monarch,prime_minister) which lists prime ministers that held
+-- office during the reign of the monarch
+-- strategy: create start-finish dates for prime ministers
+--           create start-finish dates for monarchs
+--	     join the table according to these dates
+
+-- how to get the finish date? NOT WITH DEATH!
+-- not even death for monarchs, because abdication occurs.
+
+-- instead, for a given monarch/prime_minister, find minimum accession/entry
+-- date that is greater than that monarch/prime_minister's.
+-- do this with joining on greater than. and then take min().
+
+
+SELECT monarch.name,
+       monarch.accession AS start,
+       MIN(later_monarch.accession) AS finish
+FROM   monarch
+       JOIN monarch as later_monarch
+       ON monarch.accession < later_monarch.accession
+GROUP BY monarch.name;       
+
+-- name is not a key in prime_minister because some prime ministers may hold
+-- office for 2 non consecutive terms, so need to group by entry as well
+SELECT prime_minister.name,
+       prime_minister.entry AS start,
+       MIN(later_prime_minister.entry) AS finish
+FROM   prime_minister
+       JOIN prime_minister as later_prime_minister
+       ON prime_minister.entry < later_prime_minister.entry
+GROUP BY prime_minister.name, prime_minister.entry;
+
+
+
+
+-- death is no good!
+-- SELECT   monarch.name,
+--          monarch.accession AS start,
+-- 	 (CASE WHEN person.dod IS NULL
+-- 	           THEN '2014-01-01'
+-- 		   ELSE person.dod
+--           END) AS finish
+-- FROM 	 monarch
+-- 	 JOIN person
+-- 	 ON monarch.name = person.name;
+
+
+
+
+
+
+ORDER BY monarch, prime_minister
+
+
+
+
