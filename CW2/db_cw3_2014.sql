@@ -72,18 +72,10 @@ ORDER BY father, born;
 --           create start-finish dates for monarchs
 --	     join the table according to these dates
 
--- according to what rules should the tables be joined?
--- prime_minister and monarch are commonly active at some point iff
--- [pm.start, pm.finish] intersect [mon.start, mon.finish] is not empty
--- in SQL terms:
--- if (pm.start <= mon.start and mon.start < pm.finish)
---    or (mon.start <= pm.start and pm.start < mon.finish)
-
 -- how to get the finish date?
 -- for a given monarch/prime_minister, find minimum accession/entry
 -- date that is greater than that monarch/prime_minister's.
 -- do this with joining on greater than. and then take min().
-
 CREATE TEMPORARY TABLE monSF AS 
 SELECT monarch.name,
        monarch.accession AS start,
@@ -97,6 +89,8 @@ FROM   monarch
 GROUP BY monarch.name;
 
 
+-- name is not key on prime_minister, because a prime minister may hold
+-- office over non consecutive terms. so need to group by entry as well.
 CREATE TEMPORARY TABLE pmSF AS 
 SELECT prime_minister.name,
        prime_minister.entry AS start,
@@ -110,6 +104,9 @@ FROM   prime_minister
 GROUP BY prime_minister.name, prime_minister.entry;
 
 
+-- according to what rules should the tables be joined?
+-- prime_minister and monarch are commonly active at some point iff
+-- [pm.start, pm.finish] intersect [mon.start, mon.finish] is not empty
 SELECT DISTINCT monSF.name AS monarch,
        pmSF.name AS prime_minister
 FROM   monSF,
