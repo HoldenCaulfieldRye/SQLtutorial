@@ -83,53 +83,71 @@ ORDER BY father, born;
 --           create start-finish dates for monarchs
 --	     join the table according to these dates
 
--- how to get the finish date? NOT WITH DEATH!
--- not even death for monarchs, because abdication occurs.
+-- according to what rules should the tables be joined?
+-- prime_minister and monarch are commonly active at some point iff
+-- [pm.start, pm.finish] intersect [mon.start, mon.finish] is not empty
+-- in SQL terms:
+-- if (pm.start <= mon.start and mon.start < pm.finish)
+--    or (mon.start <= pm.start and pm.start < mon.finish)
 
--- instead, for a given monarch/prime_minister, find minimum accession/entry
+-- how to get the finish date?
+-- for a given monarch/prime_minister, find minimum accession/entry
 -- date that is greater than that monarch/prime_minister's.
 -- do this with joining on greater than. and then take min().
 
+SELECT DISTINCT monSF.name AS monarch,
+       pmSF.name AS prime_minister
+FROM   (SELECT monarch.name,
+       	       monarch.accession AS start,
+       	       (CASE WHEN MIN(later_monarch.accession) IS NULL
+       	       	          THEN '2015-01-01'
+		  	  ELSE MIN(later_monarch.accession)
+		END) AS finish
+	FROM   monarch
+       	       LEFT JOIN monarch AS later_monarch
+       	       ON monarch.accession < later_monarch.accession
+	GROUP BY monarch.name) AS monSF,
+       (SELECT prime_minister.name,
+       	       prime_minister.entry AS start,
+       	       (CASE WHEN MIN(later_prime_minister.entry) IS NULL
+       	                  THEN '2015-01-01'
+                          ELSE MIN(later_prime_minister.entry)
+                END) AS finish
+	FROM   prime_minister
+       	       LEFT JOIN prime_minister as later_prime_minister
+       	       ON prime_minister.entry < later_prime_minister.entry
+	GROUP BY prime_minister.name, prime_minister.entry) AS pmSF
+WHERE  (pmSF.start <= monSF.start AND monSF.start <= pmSF.finish)
+       OR (monSF.start <= pmSF.start AND pmSF.start <= monSF.finish)
+ORDER BY monSF.name, pmSF.name;
 
+
+-- monarchSF
 SELECT monarch.name,
        monarch.accession AS start,
-       MIN(later_monarch.accession) AS finish
+       (CASE WHEN MIN(later_monarch.accession) IS NULL
+       	          THEN '2015-01-01'
+		  ELSE MIN(later_monarch.accession)
+	END) AS finish
 FROM   monarch
-       JOIN monarch as later_monarch
+       LEFT JOIN monarch as later_monarch
        ON monarch.accession < later_monarch.accession
-GROUP BY monarch.name;       
+GROUP BY monarch.name
+order by monarch.name;
 
+
+-- pmSF
 -- name is not a key in prime_minister because some prime ministers may hold
 -- office for 2 non consecutive terms, so need to group by entry as well
 SELECT prime_minister.name,
        prime_minister.entry AS start,
-       MIN(later_prime_minister.entry) AS finish
+       (CASE WHEN MIN(later_prime_minister.entry) IS NULL
+       	         THEN '2015-01-01'
+                 ELSE MIN(later_prime_minister.entry)
+        END) AS finish
 FROM   prime_minister
-       JOIN prime_minister as later_prime_minister
+       LEFT JOIN prime_minister as later_prime_minister
        ON prime_minister.entry < later_prime_minister.entry
-GROUP BY prime_minister.name, prime_minister.entry;
-
-
-
-
--- death is no good!
--- SELECT   monarch.name,
---          monarch.accession AS start,
--- 	 (CASE WHEN person.dod IS NULL
--- 	           THEN '2014-01-01'
--- 		   ELSE person.dod
---           END) AS finish
--- FROM 	 monarch
--- 	 JOIN person
--- 	 ON monarch.name = person.name;
-
-
-
-
-
-
-ORDER BY monarch, prime_minister
-
-
-
+GROUP BY prime_minister.name, prime_minister.entry
+order by prime_minister.name;
 
